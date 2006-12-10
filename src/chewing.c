@@ -137,7 +137,7 @@ configure(uim_chewing_context *ucc)
   int i, style;
   uim_lisp phrase_forward, esc_clean, space_as_selection, sel_style;
 
-  config.selectAreaLen = 40;
+  config.candPerPage = 10;
   config.maxChiSymbolLen = 16;
 
   phrase_forward = uim_scm_eval_c_string("chewing-phrase-forward?");
@@ -472,6 +472,12 @@ press_key_internal(uim_chewing_context *ucc, int ukey, int state,
       chewing_handle_Capslock(cc);
       break;
 #endif
+    case UKey_Prior:
+      chewing_handle_PageUp(cc);
+      break;
+    case UKey_Next:
+      chewing_handle_PageDown(cc);
+      break;
     default:
       if (ukey > 32 && ukey < 127) {
 	chewing_handle_Default(cc, ukey);
