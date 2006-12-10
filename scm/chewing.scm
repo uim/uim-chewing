@@ -104,11 +104,12 @@
 		    (N_ "Half shape")
 		    (N_ "Half Shape Mode")))
 		 (lambda (mc)
-		   (if (= (chewing-lib-get-shape-mode
-		   	   (chewing-context-mc-id mc))
-			  0)
+		   (let ((mode (chewing-lib-get-shape-mode
+				(chewing-context-mc-id mc))))
+		     (if (or (not mode)
+			     (= mode 0))
 		       #t
-		       #f))
+		       #f)))
 		 (lambda (mc)
 		   (chewing-lib-set-shape-mode (chewing-context-mc-id mc)
 					       chewing-halfshape-mode)))
@@ -121,11 +122,13 @@
 		      (N_ "Full shape")
 		      (N_ " Full Shape Mode")))
 		 (lambda (mc)
-		   (if (= (chewing-lib-get-shape-mode
-		   	   (chewing-context-mc-id mc))
-			  1)
+		   (let ((mode (chewing-lib-get-shape-mode
+				(chewing-context-mc-id mc))))
+		     (if (and
+			   mode
+			   (= mode 1))
 		       #t
-		       #f))
+		       #f)))
 		 (lambda (mc)
 		   (chewing-lib-set-shape-mode (chewing-context-mc-id mc)
 					       chewing-fullshape-mode)))
@@ -254,7 +257,7 @@
 	(if (chewing-press-key mc key key-state #t)
 	    #f
 	    (if (chewing-off-key? key key-state)
-	        (begin
+		(begin
 		  (chewing-reset-handler mc)
 		  (im-clear-preedit mc)
 		  (im-deactivate-candidate-selector mc)

@@ -729,7 +729,7 @@ get_shape_mode(uim_lisp id_)
   ucc = get_chewing_context(id);
 
   if (!ucc)
-    return uim_scm_make_int(mode);
+    return uim_scm_f();
 
   mode = chewing_get_ShapeMode(ucc->cc);
 
