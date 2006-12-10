@@ -1,0 +1,15 @@
+uim-chewing:
+  Chewing IM for uim
+
+Requires:
+  uim 1.2.0 or later
+  libchewing 0.3.0 or later
+
+Install:
+  $ ./configure
+  $ make
+  # make install
+  $ uim-pref-gtk &!	# adding Chewing into 'Enabled input method'
+
+Default On/Off key:
+  Ctrl-Space
