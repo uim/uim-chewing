@@ -51,7 +51,7 @@
 (define-custom 'chewing-phrase-forward? #f
   '(chewing)
   '(boolean)
-  (_ "Phase forward")
+  (_ "Phrase forward")
   (_ "long description will be here."))
 
 (define-custom 'chewing-space-as-selection? #t
