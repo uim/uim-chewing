@@ -143,9 +143,7 @@
 		     (actions-new chewing-input-mode-actions))
     (register-widget 'widget_chewing_shape_mode
 		     (activity-indicator-new chewing-shape-mode-actions)
-		     (actions-new chewing-shape-mode-actions))
-		     
-		     ))
+		     (actions-new chewing-shape-mode-actions))))
 
 (define chewing-context-rec-spec
   (append
@@ -167,7 +165,7 @@
 	  (set! chewing-lib-initialized? (chewing-lib-init)))
       (if chewing-lib-initialized?
 	(begin
-	  (chewing-context-set-mc-id! mc (chewing-lib-alloc-context name))
+	  (chewing-context-set-mc-id! mc (chewing-lib-alloc-context))
 	  (set! chewing-context-alist
 		(alist-replace
 		 (list (chewing-context-mc-id mc) mc) chewing-context-alist))))

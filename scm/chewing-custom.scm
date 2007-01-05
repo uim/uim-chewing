@@ -64,7 +64,7 @@
   '(chewing candwin)
   (list 'choice
 	(list 'chewing-cand-selection-numkey (_ "num key") (_ "Selection by number key"))
-	(list 'chewing-cand-selection-asdfghjkl (_ "asdfghjkl\073") (_ "Selection by asdfghjkl\073")))
+	(list 'chewing-cand-selection-asdfghjkl (_ "asdfghjkl;") (_ "Selection by asdfghjkl;")))
   (_ "Candidate selection style")
   (_ "long description will be here."))
 
