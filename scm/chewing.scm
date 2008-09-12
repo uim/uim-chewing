@@ -44,8 +44,8 @@
 
 ;; actions of widget_chewing_input_mode
 (define chewing-input-mode-actions
-  '(action_chewing_off
-    action_chewing_on))
+  '(action_chewing_on
+    action_chewing_off))
 
 ;; actions of widget_chewing_shape_mode
 (define chewing-shape-mode-actions
