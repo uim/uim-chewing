@@ -1,6 +1,6 @@
 ;;; chewing-custom.scm: Customization variables for chewing.scm
 ;;;
-;;; Copyright (c) 2006 uim Project http://uim.freedesktop.org/
+;;; Copyright (c) 2006-2008 uim Project http://code.google.com/p/uim/
 ;;;
 ;;; All rights reserved.
 ;;;
