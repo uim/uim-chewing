@@ -1,4 +1,4 @@
-SUBDIRS = src scm
+SUBDIRS = src scm pixmaps
 
 ChangeLog : FORCE
 	@cd $(top_srcdir); \

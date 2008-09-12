@@ -1,5 +1,5 @@
 ;;;
-;;; Copyright (c) 2006 uim Project http://uim.freedesktop.org/
+;;; Copyright (c) 2006-2008 uim Project http://uim.freedesktop.org/
 ;;;
 ;;; All rights reserved.
 ;;;
@@ -267,7 +267,7 @@
 (define chewing-release-key-handler
   (lambda (mc key key-state)
     (if (or
-	 (control-char? key)
+	 (ichar-control? key)
 	 (not (chewing-context-on mc)))
 	(chewing-commit-raw mc))))
 
