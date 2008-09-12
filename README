@@ -2,8 +2,8 @@ uim-chewing:
   Chewing IM for uim
 
 Requires:
-  uim 1.2.0 or later
-  libchewing 0.3.0 or later
+  uim 1.5.0 or later
+  libchewing 0.3.091 or later
 
 Install:
   $ ./configure
