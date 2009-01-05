@@ -1,3 +1,10 @@
+Overview of changes from 0.0.3.1 to 0.0.3.2
+==
+* Fix
+  * Fix candidate window behavior
+  * Fix support for DACHEN CP26 and HANYU_PINYIN keyboard type.
+
+
 Overview of changes from 0.0.2 to 0.0.3
 ==
   * Support libchewing >= 0.3.091

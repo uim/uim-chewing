@@ -66,7 +66,8 @@
     (chewing-kbd-et26		. 5)
     (chewing-kbd-dvorak		. 6)
     (chewing-kbd-dvorak-hsu	. 7)
-    (chewing-kbd-hanyu-pinyin	. 8)))
+    (chewing-kbd-dachen-cp26	. 8)
+    (chewing-kbd-hanyu-pinyin	. 9)))
 
 (define chewing-lib-initialized? #f)
 

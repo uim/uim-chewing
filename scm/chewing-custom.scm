@@ -79,6 +79,7 @@
 	(list 'chewing-kbd-et26 (_ "ET26") (_ "ET26 Keyboard"))
 	(list 'chewing-kbd-dvorak (_ "DVORAK") (_ "DVORAK Keyboard"))
 	(list 'chewing-kbd-dvorak-hsu (_ "DVORAK HSU") (_ "DVORAK HSU Keyboard"))
+        (list 'chewing-kbd-dachen-cp26 (_ "DACHEN CP26") (_ "DACHEN CP26 Keyboard"))
 	(list 'chewing-kbd-hanyu-pinyin (_ "HANYU PINYIN") (_ "HANYU PINYIN Keyboard")))
   (_ "Keyboard layout type")
   (_ "long description will be here."))

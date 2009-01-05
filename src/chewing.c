@@ -645,9 +645,7 @@ get_nth_candidate(uim_lisp id_, uim_lisp nth_)
   if (!ucc)
     return uim_scm_f();
 
-  n = ucc->cc->output->pci->pageNo * ucc->cc->output->pci->nChoicePerPage;
-
-  return uim_scm_make_str(ucc->cc->output->pci->totalChoiceStr[n + nth]);
+  return uim_scm_make_str(ucc->cc->output->pci->totalChoiceStr[nth]);
 }
 
 static uim_lisp
