@@ -1,3 +1,8 @@
+Overview of changes from 0.0.3.x to 0.0.4
+==
+* Support API of libchewing = 0.3.2
+
+
 Overview of changes from 0.0.3.1 to 0.0.3.2
 ==
 * Fix
@@ -7,7 +12,7 @@ Overview of changes from 0.0.3.1 to 0.0.3.2
 
 Overview of changes from 0.0.2 to 0.0.3
 ==
-  * Support libchewing >= 0.3.091
+* Support libchewing >= 0.3.091
 
 
 Overview of changes from 0.0.1 to 0.0.2

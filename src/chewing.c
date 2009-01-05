@@ -33,8 +33,11 @@
 
 #include <config.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
+#include <limits.h>
 
 #include <chewing.h>
 
@@ -73,10 +76,10 @@ static struct context {
  *  chewing-cand-selection-asdfghjkl: 1
  * see chewing-custom.scm
  */
-static char *uim_chewing_selkeys[2] = {
-  "1234567890",
-  "asdfghjkl;"
-};
+
+static int selkey_num[11] = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 0};
+static int selkey_asdf[11] = {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', 0};
+static int *uim_chewing_selkeys[2] = { selkey_num, selkey_asdf };
 
 static uim_chewing_context *
 get_chewing_context(int id)
@@ -133,30 +136,34 @@ configure_kbd_type(uim_chewing_context *ucc)
 static void
 configure(uim_chewing_context *ucc)
 {
-  ChewingConfigData config;
   int i, style;
-  uim_lisp phrase_forward, esc_clean, space_as_selection, sel_style;
+  int selkey[10];
+  uim_lisp phrase_forward, esc_clean, space_as_selection, sel_style,
+	   phrase_choice_rearward, auto_shift_cursor;
 
-  config.candPerPage = 10;
-  config.maxChiSymbolLen = 16;
+  chewing_set_candPerPage(ucc->cc, 10);
+  chewing_set_maxChiSymbolLen(ucc->cc, 16);
 
   phrase_forward = uim_scm_eval_c_string("chewing-phrase-forward?");
-  config.bAddPhraseForward = uim_scm_c_bool(phrase_forward);
+  chewing_set_addPhraseDirection(ucc->cc, !uim_scm_c_bool(phrase_forward));
+
+  phrase_choice_rearward = uim_scm_eval_c_string("chewing-phrase-choice-rearward?");
+  chewing_set_phraseChoiceRearward(ucc->cc, uim_scm_c_bool(phrase_choice_rearward));
+
+  auto_shift_cursor = uim_scm_eval_c_string("chewing-auto-shift-cursor?");
+  chewing_set_autoShiftCur(ucc->cc, uim_scm_c_bool(auto_shift_cursor));
 
   space_as_selection = uim_scm_eval_c_string("chewing-space-as-selection?");
-  config.bSpaceAsSelection = uim_scm_c_bool(space_as_selection);
+  chewing_set_spaceAsSelection(ucc->cc, uim_scm_c_bool(space_as_selection));
 
   esc_clean = uim_scm_eval_c_string("chewing-esc-clean?");
-  config.bEscCleanAllBuf = uim_scm_c_bool(esc_clean);
+  chewing_set_escCleanAllBuf(ucc->cc, uim_scm_c_bool(esc_clean));
 
   sel_style =
     uim_scm_eval_c_string("(symbol-value chewing-candidate-selection-style)");
   style = uim_scm_c_int(sel_style);
-  for (i = 0; i < 10; i++)
-    config.selKey[i] = uim_chewing_selkeys[style][i];
-  config.selKey[i] = '\0';
+  chewing_set_selKey(ucc->cc, uim_chewing_selkeys[style], 10);
 
-  chewing_Configure(ucc->cc, &config);
   configure_kbd_type(ucc);
 }
 
@@ -184,8 +191,8 @@ activate_candwin(uim_chewing_context *ucc)
   len = strlen(ACTIVATE_CMD "(   )") + MAX_LENGTH_OF_INT_AS_STR * 3;
   buf = malloc(len + 1);
   snprintf(buf, len + 1, "(" ACTIVATE_CMD " %d %d %d)", ucc->slot_id,
-	   ucc->cc->output->pci->nTotalChoice,
-	   ucc->cc->output->pci->nChoicePerPage);
+	   chewing_cand_TotalChoice(ucc->cc),
+	   chewing_cand_ChoicePerPage(ucc->cc));
   uim_scm_eval_c_string(buf);
   free(buf);
 }
@@ -263,64 +270,78 @@ static uim_lisp
 check_output(uim_chewing_context *ucc)
 {
   int i, j, len, preedit_cleared = 0, preedit_len = 0, buf_len = 0;
-  char *buf;
+  int cursor_pos, zuin_len, n_page, page_no;
+  char *buf, *locale;
+  wchar_t *wcs;
+  size_t wclen = 0;
   ChewingContext *cc = ucc->cc;
-  ChewingOutput *output = cc->output;
 
   buf = strdup("");
 
-  if (output->keystrokeRtn & KEYSTROKE_COMMIT) {
-    for (i = 0; i < output->nCommitStr; i++) {
-      len = strlen((char *)output->commitStr[i].s);
-      buf_len += len;
-      buf = realloc(buf, buf_len + 1);
-      strncat(buf, (char *)output->commitStr[i].s, len);
-    }
-    clear_preedit(ucc);
-    preedit_cleared = 1;
-    commit_string(ucc, buf);
-    buf[0] = '\0';
-  }
-
-
-  /* preedit before cursor */
-  buf_len = 0;
-  for (i = 0; i < output->chiSymbolCursor; i++) {
-    len = strlen((char *)output->chiSymbolBuf[i].s);
-    buf_len += len;
-    buf = realloc(buf, buf_len + 1);
-    strncat(buf, (char *)output->chiSymbolBuf[i].s, len);
-  }
-  if (i > 0) {
-    if (!preedit_cleared) {
+  if (chewing_commit_Check(cc)) {
+    char *str = chewing_commit_String(cc);
+    if (str) {
       clear_preedit(ucc);
       preedit_cleared = 1;
+      commit_string(ucc, str);
+      chewing_free(str);
     }
-    pushback_preedit_string(ucc, buf, UPreeditAttr_UnderLine);
-    pushback_preedit_string(ucc, "", UPreeditAttr_Cursor);
-    preedit_len += strlen(buf);
-    buf[0] = '\0';
+  }
+
+  cursor_pos = chewing_cursor_Current(cc);
+
+  /* preedit before cursor */
+  if (chewing_buffer_Check(cc)) {
+    char *str;
+
+    str = chewing_buffer_String(cc);
+    locale = strdup(setlocale(LC_CTYPE, NULL));
+    wcs = malloc(sizeof(wchar_t) * (chewing_buffer_Len(cc) + 1));
+    setlocale(LC_CTYPE, "en_US.UTF-8");
+    wclen = mbstowcs(wcs, str, chewing_buffer_Len(cc));
+    if (wclen != -1) {
+      wcs[chewing_buffer_Len(cc)] = L'\0';
+
+      buf_len = 0;
+      for (i = 0; i < cursor_pos; i++) {
+        char mb[MB_CUR_MAX];
+        len = wctomb(mb, wcs[i]);
+	mb[len] = '\0';
+        buf_len += len;
+        buf = realloc(buf, buf_len + 1);
+        strncat(buf, mb, len);
+      }
+      if (i > 0) {
+        if (!preedit_cleared) {
+          clear_preedit(ucc);
+          preedit_cleared = 1;
+        }
+        pushback_preedit_string(ucc, buf, UPreeditAttr_UnderLine);
+        pushback_preedit_string(ucc, "", UPreeditAttr_Cursor);
+        preedit_len += strlen(buf);
+        buf[0] = '\0';
+      }
+    }
+
+    chewing_free(str);
+
+    setlocale(LC_CTYPE, locale);
+    free(locale);
   }
 
   /* zuin */
-  buf_len = 0;
-  for (i = 0, j = 0; i < ZUIN_SIZE; i++) {
-    if (output->zuinBuf[i].s[0] != '\0') {
-      len = strlen((char *)output->zuinBuf[i].s);
-      buf_len += len;
-      buf = realloc(buf, buf_len + 1);
-      strncat(buf, (char *)output->zuinBuf[i].s, len);
-      j++;
+  {
+    char *str;
+    str = chewing_zuin_String(cc, &zuin_len);
+    if (str) {
+      if (!preedit_cleared) {
+	clear_preedit(ucc);
+	preedit_cleared = 1;
+      }
+      pushback_preedit_string(ucc, str, UPreeditAttr_Reverse);
+      preedit_len += zuin_len;
+      chewing_free(str);
     }
-  }
-  if (j > 0) {
-    if (!preedit_cleared) {
-      clear_preedit(ucc);
-      preedit_cleared = 1;
-    }
-    pushback_preedit_string(ucc, buf, UPreeditAttr_Reverse);
-    preedit_len += strlen(buf);
-    buf[0] = '\0';
   }
 
   /* XXX set dispInterval attributes */
@@ -331,53 +352,65 @@ check_output(uim_chewing_context *ucc)
   }
 #endif
 
-
   /* preedit after the cursor */
-  buf_len = 0;
-  for (i = output->chiSymbolCursor; i < output->chiSymbolBufLen; i++) {
-      if (i == output->chiSymbolCursor && output->zuinBuf[0].s[0] == '\0') {
-	if (!preedit_cleared) {
-	  clear_preedit(ucc);
-	  preedit_cleared = 1;
-	}
-	pushback_preedit_string(ucc, (char *)output->chiSymbolBuf[i].s,
-				UPreeditAttr_UnderLine | UPreeditAttr_Reverse);
-	preedit_len += strlen((char *)output->chiSymbolBuf[i].s);
-      } else {
-	len = strlen((char *)output->chiSymbolBuf[i].s);
-	buf_len += len;
-	buf = realloc(buf, buf_len + 1);
-	strncat(buf, (char *)output->chiSymbolBuf[i].s, len);
-      }
-  }
-  if (i > output->chiSymbolCursor) {
-    if (!preedit_cleared) {
-      clear_preedit(ucc);
-      preedit_cleared = 1;
-    }
-    pushback_preedit_string(ucc, buf, UPreeditAttr_UnderLine);
-    preedit_len += strlen(buf);
-    buf[0] = '\0';
-  }
+  if (cursor_pos < chewing_buffer_Len(cc)) {
+    locale = strdup(setlocale(LC_CTYPE, NULL));
+    setlocale(LC_CTYPE, "en_US.UTF-8");
 
+    buf_len = 0;
+    for (i = cursor_pos; i < chewing_buffer_Len(cc); i++) {
+      char mb[MB_CUR_MAX];
+      len = wctomb(mb, wcs[i]);
+      mb[len] = '\0';
+      if (i == cursor_pos && zuin_len == 0) {
+        if (!preedit_cleared) {
+          clear_preedit(ucc);
+          preedit_cleared = 1;
+        }
+        pushback_preedit_string(ucc, mb,
+		       	UPreeditAttr_UnderLine | UPreeditAttr_Reverse);
+        preedit_len += len;
+      } else {
+        buf_len += len;
+	buf = realloc(buf, buf_len + 1);
+	strncat(buf, mb, len);
+      }
+    }
+    if (i > cursor_pos) {
+      if (!preedit_cleared) {
+        clear_preedit(ucc);
+        preedit_cleared = 1;
+      }
+      pushback_preedit_string(ucc, buf, UPreeditAttr_UnderLine);
+      preedit_len += strlen(buf);
+      buf[0] = '\0';
+    }
+
+    setlocale(LC_CTYPE, locale);
+    free(locale);
+  }
 
   /* update candwin */
-  if (output->pci && output->pci->nPage != 0) {
-    if (output->pci->pageNo == 0 && ucc->prev_page == -1) {
+  n_page = chewing_cand_TotalPage(cc);
+  page_no = chewing_cand_CurrentPage(cc);
+  if (!chewing_cand_CheckDone(cc) && n_page != 0) {
+    if (page_no == 0 && ucc->prev_page == -1) {
       activate_candwin(ucc);
       ucc->has_active_candwin = 1;
-    } else if ((output->pci->pageNo == ucc->prev_page + 1) ||
-	       (output->pci->pageNo == 0 &&
-		ucc->prev_page == output->pci->nPage - 1)) {
-      if (ucc->has_active_candwin)
+    } else if ((page_no == ucc->prev_page + 1) ||
+	       (page_no == 0 &&
+		ucc->prev_page == n_page - 1)) {
+      if (ucc->has_active_candwin) {
 	shift_candwin(ucc, 1);
-    } else if ((output->pci->pageNo == ucc->prev_page - 1) ||
-	       ((output->pci->pageNo == output->pci->nPage - 1) &&
+      }
+    } else if ((page_no == ucc->prev_page - 1) ||
+	       ((page_no == n_page - 1) &&
 		ucc->prev_page == 0)) {
-      if (ucc->has_active_candwin)
+      if (ucc->has_active_candwin) {
 	shift_candwin(ucc, 0);
+      }
     }
-    ucc->prev_page = output->pci->pageNo;
+    ucc->prev_page = page_no;
   } else {
     if (ucc->has_active_candwin)
       deactivate_candwin(ucc);
@@ -387,17 +420,17 @@ check_output(uim_chewing_context *ucc)
 
   /* msgs */
   buf_len = 0;
-  if (output->bShowMsg) {
+  if (chewing_aux_Check(cc)) {
+    char *str = chewing_aux_String(cc);
+    int len = chewing_aux_Length(cc);
+    buf_len += len;
+
     buf_len += 2;
     buf = realloc(buf, buf_len + 1);
     strncat(buf, "; ", 2);
-    for (i = 0; i < output->showMsgLen; i++) {
-      len = strlen((char *)output->chiSymbolBuf[i].s);
-      buf_len += len;
-      buf = realloc(buf, buf_len + 1);
-      strncat(buf, (char *)output->chiSymbolBuf[i].s, len);
-    }
-    output->showMsgLen = 0;
+    strncat(buf, str, len);
+    chewing_free(str);
+
     if (!preedit_cleared) {
       clear_preedit(ucc);
       preedit_cleared = 1;
@@ -406,14 +439,13 @@ check_output(uim_chewing_context *ucc)
     preedit_len += strlen(buf);
     buf[0] = '\0';
   }
-
   free(buf);
 
-  if (output->keystrokeRtn & KEYSTROKE_ABSORB) {
+  if (chewing_keystroke_CheckAbsorb(cc)) {
     if (preedit_len == 0 && !preedit_cleared)
       clear_preedit(ucc);
     return uim_scm_t();
-  } else if (output->keystrokeRtn & KEYSTROKE_IGNORE) {
+  } else if (chewing_keystroke_CheckIgnore(cc)) {
     return uim_scm_f();
   }
 
@@ -519,7 +551,7 @@ press_key_internal(uim_chewing_context *ucc, int ukey, int state,
 static void
 chewing_context_release(uim_chewing_context *ucc)
 {
-  chewing_free(ucc->cc);
+  chewing_delete(ucc->cc);
   free(ucc);
 }
 
@@ -629,7 +661,7 @@ get_nr_candidates(uim_lisp id_)
   if (!ucc)
     return uim_scm_f();
 
-  return uim_scm_make_int(ucc->cc->output->pci->nTotalChoice);
+  return uim_scm_make_int(chewing_cand_TotalChoice(ucc->cc));
 }
 
 static uim_lisp
@@ -637,6 +669,8 @@ get_nth_candidate(uim_lisp id_, uim_lisp nth_)
 {
   int id, nth, n;
   uim_chewing_context *ucc;
+  char *cand;
+  uim_lisp str_;
 
   id = uim_scm_c_int(id_);
   nth = uim_scm_c_int(nth_);
@@ -645,7 +679,14 @@ get_nth_candidate(uim_lisp id_, uim_lisp nth_)
   if (!ucc)
     return uim_scm_f();
 
-  return uim_scm_make_str(ucc->cc->output->pci->totalChoiceStr[nth]);
+  if (nth == 0)
+    chewing_cand_Enumerate(ucc->cc);
+
+  cand = chewing_cand_String(ucc->cc);
+  str_ = uim_scm_make_str(cand);
+  free(cand);
+
+  return str_;
 }
 
 static uim_lisp
@@ -660,7 +701,7 @@ get_nr_candidates_per_page(uim_lisp id_)
   if (!ucc)
     return uim_scm_f();
 
-  return uim_scm_make_int(ucc->cc->output->pci->nChoicePerPage);
+  return uim_scm_make_int(chewing_cand_ChoicePerPage(ucc->cc));
 }
 
 

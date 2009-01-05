@@ -60,6 +60,18 @@
   (_ "Use space as selection")
   (_ "long description will be here."))
 
+(define-custom 'chewing-phrase-choice-rearward? #f
+  '(chewing)
+  '(boolean)
+  (_ "Phrase choice rearward")
+  (_ "long description will be here."))
+
+(define-custom 'chewing-auto-shift-cursor? #f
+  '(chewing)
+  '(boolean)
+  (_ "Auto shift cursor")
+  (_ "long description will be here."))
+
 (define-custom 'chewing-candidate-selection-style 'chewing-cand-selection-numkey
   '(chewing candwin)
   (list 'choice
@@ -118,6 +130,22 @@
 		       (chewing-lib-reload-config))))
 
 (custom-add-hook 'chewing-kbd-layout
+		 'custom-set-hooks
+		 (lambda ()
+		   (if (and
+			(symbol-bound? 'chewing-lib-init)
+			chewing-lib-initialized?)
+		       (chewing-lib-reload-config))))
+
+(custom-add-hook 'chewing-phrase-choice-rearward?
+		 'custom-set-hooks
+		 (lambda ()
+		   (if (and
+			(symbol-bound? 'chewing-lib-init)
+			chewing-lib-initialized?)
+		       (chewing-lib-reload-config))))
+
+(custom-add-hook 'chewing-auto-shift-cursor?
 		 'custom-set-hooks
 		 (lambda ()
 		   (if (and
