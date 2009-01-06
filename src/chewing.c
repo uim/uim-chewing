@@ -63,6 +63,7 @@ typedef struct chewing_context {
   ChewingContext *cc;
   int slot_id;
   int prev_page;
+  int prev_cursor;
   int has_active_candwin;
 } uim_chewing_context;
 
@@ -176,6 +177,7 @@ chewing_context_new()
   if (ucc) {
     ucc->cc = chewing_new();
     ucc->prev_page = -1;
+    ucc->prev_cursor = -1;
     ucc->has_active_candwin = 0;
   }
 
@@ -394,7 +396,7 @@ check_output(uim_chewing_context *ucc)
   n_page = chewing_cand_TotalPage(cc);
   page_no = chewing_cand_CurrentPage(cc);
   if (!chewing_cand_CheckDone(cc) && n_page != 0) {
-    if (page_no == 0 && ucc->prev_page == -1) {
+    if (page_no == 0 && ucc->prev_page == -1 || ucc->prev_cursor != cursor_pos) {
       activate_candwin(ucc);
       ucc->has_active_candwin = 1;
     } else if ((page_no == ucc->prev_page + 1) ||
@@ -417,6 +419,7 @@ check_output(uim_chewing_context *ucc)
     ucc->prev_page = -1;
     ucc->has_active_candwin = 0;
   }
+  ucc->prev_cursor = cursor_pos;
 
   /* msgs */
   buf_len = 0;

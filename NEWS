@@ -1,6 +1,11 @@
 Overview of changes from 0.0.3.x to 0.0.4
 ==
-* Support API of libchewing = 0.3.2
+* New
+  * Support API of libchewing = 0.3.2
+
+* Fix
+  * Fix candidate window behavior with 'J' and 'K' keys in
+    selection mode.
 
 
 Overview of changes from 0.0.3.1 to 0.0.3.2
