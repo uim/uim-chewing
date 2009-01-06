@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
 
-AC_INIT([uim-chewing], [0.0.4])
+AC_INIT([uim-chewing], [0.0.4.1])
 AM_INIT_AUTOMAKE(1.8.3)
 AC_CONFIG_HEADER([config.h])
 
@@ -15,7 +15,7 @@ PKG_CHECK_MODULES(CHEWING, [chewing >= 0.3.2])
 CHEWING_DATADIR=`$PKG_CONFIG chewing --variable=datadir`
 AC_DEFINE_UNQUOTED(CHEWING_DATADIR, "$CHEWING_DATADIR", [Chewing data dir])
 
-PKG_CHECK_MODULES(UIM, [uim >= 1.5.0])
+PKG_CHECK_MODULES(UIM, [uim >= 1.5.0 uim < 1.6.0])
 UIM_LIBDIR=`$PKG_CONFIG uim --variable=libdir`
 UIM_SCMDIR=`$PKG_CONFIG uim --variable=uim_scmdir`
 uim_pixmapsdir=`$PKG_CONFIG uim --variable=uim_datadir`/pixmaps

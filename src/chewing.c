@@ -396,12 +396,10 @@ check_output(uim_chewing_context *ucc)
   n_page = chewing_cand_TotalPage(cc);
   page_no = chewing_cand_CurrentPage(cc);
   if (!chewing_cand_CheckDone(cc) && n_page != 0) {
-    if (page_no == 0 && ucc->prev_page == -1 || ucc->prev_cursor != cursor_pos) {
+    if (page_no == 0) {
       activate_candwin(ucc);
       ucc->has_active_candwin = 1;
-    } else if ((page_no == ucc->prev_page + 1) ||
-	       (page_no == 0 &&
-		ucc->prev_page == n_page - 1)) {
+    } else if (page_no == ucc->prev_page + 1) {
       if (ucc->has_active_candwin) {
 	shift_candwin(ucc, 1);
       }
