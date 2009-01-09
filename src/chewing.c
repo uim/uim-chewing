@@ -41,8 +41,13 @@
 
 #include <chewing.h>
 
+#include <uim.h>
 #include <uim-scm.h>
+#if UIM_VERSION_REQUIRE(1,6,0)
+#include <dynlib.h>
+#else
 #include <plugin.h>
+#endif
 
 #include "keytab.h"
 
