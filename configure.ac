@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)
 
-AC_INIT([uim-chewing], [0.0.4.1])
+AC_INIT([uim-chewing], [0.0.4.2])
 AM_INIT_AUTOMAKE(1.8.3)
 AC_CONFIG_HEADER([config.h])
 
