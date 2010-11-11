@@ -70,6 +70,7 @@ typedef struct chewing_context {
   int prev_page;
   int prev_cursor;
   int has_active_candwin;
+  int has_pending_input;
 } uim_chewing_context;
 
 static struct context {
@@ -184,6 +185,7 @@ chewing_context_new()
     ucc->prev_page = -1;
     ucc->prev_cursor = -1;
     ucc->has_active_candwin = 0;
+    ucc->has_pending_input = 0;
   }
 
   return ucc;
@@ -550,6 +552,7 @@ press_key_internal(uim_chewing_context *ucc, int ukey, int state,
   } else {
       return uim_scm_f();
   }
+  ucc->has_pending_input = 1;
 
   return check_output(ucc);
 }
@@ -652,6 +655,27 @@ focus_out_context(uim_lisp id_)
   }
 
   return uim_scm_f();
+}
+
+static uim_lisp
+flush(uim_lisp id_)
+{
+  int id;
+  uim_chewing_context *ucc;
+
+  id = uim_scm_c_int(id_);
+  ucc = get_chewing_context(id);
+
+  if (!ucc)
+    return uim_scm_f();
+
+  if (ucc->has_pending_input) {
+      chewing_handle_Enter(ucc->cc);
+      check_output(ucc);
+      ucc->has_pending_input = 0;
+  }
+
+  return uim_scm_t();
 }
 
 static uim_lisp
@@ -843,6 +867,7 @@ uim_plugin_instance_init(void)
   uim_scm_init_subr_1("chewing-lib-reset-context", reset_context);
   uim_scm_init_subr_1("chewing-lib-focus-in-context", focus_in_context);
   uim_scm_init_subr_1("chewing-lib-focus-out-context", focus_out_context);
+  uim_scm_init_subr_1("chewing-lib-flush", flush);
   uim_scm_init_subr_1("chewing-lib-get-nr-candidates", get_nr_candidates);
   uim_scm_init_subr_2("chewing-lib-get-nth-candidate", get_nth_candidate);
   uim_scm_init_subr_1("chewing-lib-get-nr-candidates-per-page",

@@ -256,7 +256,8 @@
 	(if (chewing-press-key mc key key-state #t)
 	    #f
 	    (if (chewing-off-key? key key-state)
-		(begin
+		(let ((mid (chewing-context-mc-id mc)))
+		  (chewing-lib-flush mid)
 		  (chewing-reset-handler mc)
 		  (im-clear-preedit mc)
 		  (im-deactivate-candidate-selector mc)
