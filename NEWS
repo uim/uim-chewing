@@ -1,3 +1,12 @@
+Overview of changes from 0.0.4.x to 0.1.0
+=========================================
+* New
+  * Simplification of code using uim_scm_callf()
+
+* Fix
+  * Commit remaining input text before deactivating (#31545, Kan-Ru
+    Chen)
+
 Overview of changes from 0.0.3.x to 0.0.4
 ==
 * New
