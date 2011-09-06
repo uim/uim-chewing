@@ -3,7 +3,7 @@ uim-chewing:
 
 Requires:
   uim 1.5.0 or later
-  libchewing 0.3.091 or later
+  libchewing 0.3.2 or later
 
 Install:
   $ ./configure
