@@ -9,6 +9,7 @@ Install:
   $ ./configure
   $ make
   # make install
+  # uim-module-manager --register chewing
   $ uim-pref-gtk &!	# adding Chewing into 'Enabled input method'
 
 Default On/Off key:
